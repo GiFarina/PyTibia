@@ -62,6 +62,8 @@ def hashitHex(arr: np.ndarray) -> str:
 
 # TODO: add unit tests
 def locate(compareImage: GrayImage, img: GrayImage, confidence: float=0.85) -> Union[BBox, None]:
+    cv2.imwrite('compareImage.png', compareImage)
+    cv2.imwrite('img.png', img)
     match = cv2.matchTemplate(compareImage, img, cv2.TM_CCOEFF_NORMED)
     res = cv2.minMaxLoc(match)
     matchConfidence = res[1]
