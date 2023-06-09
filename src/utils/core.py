@@ -1,12 +1,11 @@
 import cv2
-import dxcam
+import mss
 import numpy as np
 from typing import Callable, Union
 import xxhash
 from src.shared.typings import BBox, Coordinate, GrayImage, XYCoordinate
 
 
-camera = dxcam.create(output_color='GRAY')
 latestScreenshot = None
 
 
@@ -87,8 +86,11 @@ def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float=0.85
 
 # TODO: add unit tests
 def getScreenshot() -> GrayImage:
-    global camera, latestScreenshot
-    screenshot = camera.grab()
+    global latestScreenshot
+    img = np.array(mss.mss().grab(mss.mss().monitors[1]))
+    screenshot = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)[
+                        ..., np.newaxis
+                    ]
     if screenshot is None:
         return latestScreenshot
     latestScreenshot = np.array(screenshot, dtype=np.uint8).reshape((len(screenshot), len(screenshot[0])))

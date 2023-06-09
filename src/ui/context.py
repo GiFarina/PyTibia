@@ -1,6 +1,6 @@
 import numpy as np
+import subprocess
 from time import sleep
-import win32gui
 from src.gameplay.utils import releaseKeys
 from src.repositories.radar.core import getCoordinate
 from src.repositories.radar.typings import Waypoint
@@ -16,8 +16,10 @@ class GameContext:
         self.context['cavebot']['waypoints']['points'] = np.append(self.context['cavebot']['waypoints']['points'], np.array([waypoint], dtype=Waypoint))
 
     def focusInTibia(self):
-        win32gui.ShowWindow(self.context['window'], 3)
-        win32gui.SetForegroundWindow(self.context['window'])
+        script = 'tell application "System Events"\n' \
+        'set frontmost of process "Tibia" to true\n' \
+        'end tell'
+        subprocess.run(['osascript', '-e', script])
 
     def play(self):
         self.focusInTibia()

@@ -11,7 +11,6 @@ from src.gameplay.core.middlewares.playerStatus import setMapPlayerStatusMiddlew
 from src.gameplay.core.middlewares.radar import setRadarMiddleware, setWaypointIndexMiddleware
 from src.gameplay.core.middlewares.screenshot import setScreenshotMiddleware
 from src.gameplay.core.middlewares.tasks import setCleanUpTasksMiddleware
-from src.gameplay.core.middlewares.window import setTibiaWindowMiddleware
 from src.gameplay.core.tasks.lootCorpse import LootCorpseTask
 from src.gameplay.resolvers import resolveTasksByWaypoint
 from src.gameplay.healing.observers.eatFood import eatFoodObserver
@@ -32,7 +31,6 @@ def main():
     global gameContext
 
     def handleGameData(context):
-        context = setTibiaWindowMiddleware(context)
         if context['pause']:
             return context
         context = setScreenshotMiddleware(context)
