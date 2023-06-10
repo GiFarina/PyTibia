@@ -13,29 +13,14 @@ spellsPath = {
 }
 
 
-# TODO: add unit tests
 # TODO: add typings
 def comboSpellDidMatch(comboSpell, nearestCreaturesCount: int) -> bool:
     if comboSpell['creatures']['compare'] == 'lessThan':
-        if nearestCreaturesCount < comboSpell['creatures']['value']:
-            return True
-        return False
+        return nearestCreaturesCount < comboSpell['creatures']['value']
     if comboSpell['creatures']['compare'] == 'lessThanOrEqual':
-        if nearestCreaturesCount <= comboSpell['creatures']['value']:
-            return True
-        return False
+        return nearestCreaturesCount <= comboSpell['creatures']['value']
     if comboSpell['creatures']['compare'] == 'greaterThan':
-        if nearestCreaturesCount > comboSpell['creatures']['value']:
-            return True
-        return False
+        return nearestCreaturesCount > comboSpell['creatures']['value']
     if comboSpell['creatures']['compare'] == 'greaterThanOrEqual':
-        if nearestCreaturesCount >= comboSpell['creatures']['value']:
-            return True
-        return False
+        return nearestCreaturesCount >= comboSpell['creatures']['value']
     return False
-
-
-# TODO: add unit tests
-# TODO: add typings
-def getSpellPath(spell):
-    return spellsPath.get(spell, [])

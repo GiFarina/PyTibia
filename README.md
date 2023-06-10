@@ -83,6 +83,9 @@ poetry run python main.py
 ```bash
 # unit tests
 poetry run python -m pytest
+
+# unit tests with code coverage
+poetry run python -m pytest --cov=src
 ```
 
 # ✅ TODO
@@ -94,7 +97,6 @@ poetry run python -m pytest
 - Add mypy to CI
 - Add unit tests to CI
 - Add screenshot adapter on linux
-- Apply statemachine pattern to manage tasks
 
 # 👷 Authors
 

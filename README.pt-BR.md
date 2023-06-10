@@ -81,8 +81,11 @@ poetry run python main.py
 ## 🧪 Testes de execução
 
 ```bash
-# unit tests
+# testes unitários
 poetry run python -m pytest
+
+# testes unitários com cobertura de teste
+poetry run python -m pytest --cov=src
 ```
 
 # ✅ TODO
@@ -94,7 +97,6 @@ poetry run python -m pytest
 - Adicionar mypy na CI
 - Adicionar testes unitários na CI
 - Adicionar adaptador de screenshot no linux
-- Aplicar padrão de código statemachine para gerenciar tarefas
 
 # 👷 Autores
 

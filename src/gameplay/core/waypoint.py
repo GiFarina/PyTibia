@@ -1,4 +1,5 @@
 import tcod
+import numpy as np
 from src.repositories.radar.config import walkableFloorsSqms
 from src.shared.typings import Coordinate, CoordinateList
 from src.utils.coordinate import getAvailableAroundCoordinates, getClosestCoordinate
@@ -24,8 +25,12 @@ def generateFloorWalkpoints(coordinate: Coordinate, goalCoordinate: Coordinate, 
                 copiedWalkableFloorSqms[leY, leX] = 0
     x = goalCoordinate[0] - coordinate[0] + 53
     y = goalCoordinate[1] - coordinate[1] + 54
-    return [[coordinate[0] + x - 53,
-                   coordinate[1] + y - 54, coordinate[2]] for y, x in tcod.path.AStar(copiedWalkableFloorSqms, 0).get_path(54, 53, y, x)]
+    arr_uint32 = copiedWalkableFloorSqms.astype(np.uint32)
+    x32 = np.uint32(x)
+    y32 = np.uint32(y)
+
+    return [[coordinate[0] + x32 - 53,
+                   coordinate[1] + y32 - 54, coordinate[2]] for y32, x32 in tcod.path.AStar(arr_uint32, 0).get_path(54, 53, y32, x32)]
 
 
 # TODO: add unit tests
