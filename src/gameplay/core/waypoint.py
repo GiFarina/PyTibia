@@ -2,8 +2,7 @@ import tcod
 import numpy as np
 from src.repositories.radar.config import walkableFloorsSqms
 from src.shared.typings import Coordinate, CoordinateList
-from src.utils.coordinate import getAvailableAroundCoordinates, getClosestCoordinate
-from src.utils.core import getPixelFromCoordinate
+from src.utils.coordinate import getAvailableAroundCoordinates, getClosestCoordinate, getPixelFromCoordinate
 from .typings import Checkpoint
 
 

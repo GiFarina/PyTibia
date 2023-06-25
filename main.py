@@ -2,8 +2,9 @@
 import pyautogui
 from time import sleep, time
 from src.gameplay.cavebot import resolveCavebotTasks, shouldAskForCavebotTasks
-from src.gameplay.context import gameContext
+from src.gameplay.context import context
 from src.gameplay.combo import comboSpellsObserver
+from src.gameplay.core.load import loadConfigByJson, loadContextFromConfig
 from src.gameplay.core.middlewares.battleList import setBattleListMiddleware
 from src.gameplay.core.middlewares.chat import setChatTabsMiddleware
 from src.gameplay.core.middlewares.gameWindow import setDirectionMiddleware, setHandleLootMiddleware, setGameWindowCreaturesMiddleware, setGameWindowMiddleware
@@ -28,7 +29,7 @@ pyautogui.PAUSE = 0
 
 
 def main():
-    global gameContext
+    global context
 
     def handleGameData(context):
         if context['pause']:
@@ -48,7 +49,8 @@ def main():
 
     def handleGameplayTasks(context):
         # TODO: mover isso fora daqui
-        context['cavebot']['closestCreature'] = getClosestCreature(context['gameWindow']['monsters'], context['radar']['coordinate'])
+        context['cavebot']['closestCreature'] = getClosestCreature(
+            context['gameWindow']['monsters'], context['radar']['coordinate'])
         currentTask = context['tasksOrchestrator'].getCurrentTask(context)
         if currentTask is not None and currentTask.name == 'selectChatTab':
             return context
@@ -59,7 +61,8 @@ def main():
             if context['tasksOrchestrator'].getCurrentTask(context) is None:
                 # TODO: get closest dead corpse
                 firstDeadCorpse = context['loot']['corpsesToLoot'][0]
-                context['tasksOrchestrator'].setRootTask(context, LootCorpseTask(firstDeadCorpse))
+                context['tasksOrchestrator'].setRootTask(
+                    context, LootCorpseTask(firstDeadCorpse))
             context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
             return context
         hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
@@ -72,30 +75,34 @@ def main():
             context['way'] = 'waypoint'
         if hasCreaturesToAttackAfterCheck and shouldAskForCavebotTasks(context):
             currentRootTask = currentTask.rootTask if currentTask is not None else None
-            isTryingToAttackClosestCreature = currentRootTask is not None and (currentRootTask.name == 'attackClosestCreature')
+            isTryingToAttackClosestCreature = currentRootTask is not None and (
+                currentRootTask.name == 'attackClosestCreature')
             if not isTryingToAttackClosestCreature:
                 context = resolveCavebotTasks(context)
         elif context['way'] == 'waypoint':
             if context['tasksOrchestrator'].getCurrentTask(context) is None:
                 currentWaypointIndex = context['cavebot']['waypoints']['currentIndex']
                 currentWaypoint = context['cavebot']['waypoints']['points'][currentWaypointIndex]
-                context['tasksOrchestrator'].setRootTask(context, resolveTasksByWaypoint(currentWaypoint))
+                context['tasksOrchestrator'].setRootTask(
+                    context, resolveTasksByWaypoint(currentWaypoint))
         context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
         return context
 
     try:
-        # kivy.context.register_context('game', GameContext, gameContext)
+        # kivy.context.register_context('game', GameContext, context)
         # MyApp().run()
+        config = loadConfigByJson('config.json')
+        context = loadContextFromConfig(config, context)
         while True:
-            if gameContext['pause']:
+            if context['pause']:
                 continue
             startTime = time()
-            gameContext = handleGameData(gameContext)
-            gameContext = handleGameplayTasks(gameContext)
-            gameContext = gameContext['tasksOrchestrator'].do(gameContext)
-            gameContext['radar']['lastCoordinateVisited'] = gameContext['radar']['coordinate']
-            healingByPotionsObserver(gameContext)
-            comboSpellsObserver(gameContext)
+            context = handleGameData(context)
+            context = handleGameplayTasks(context)
+            context = context['tasksOrchestrator'].do(context)
+            context['radar']['lastCoordinateVisited'] = context['radar']['coordinate']
+            healingByPotionsObserver(context)
+            comboSpellsObserver(context)
             endTime = time()
             diff = endTime - startTime
             sleep(max(0.045 - diff, 0))

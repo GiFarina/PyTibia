@@ -2,8 +2,9 @@ import numpy as np
 from scipy.spatial import distance
 from typing import Union
 from src.shared.typings import Coordinate, GrayImage, GrayPixel, Waypoint, WaypointList
-from src.utils.core import getCoordinateFromPixel, getPixelFromCoordinate, hashit, hashitHex, locate
-from .config import coordinates, dimensions, floorsImgs, floorsLevelsImgsHashes, floorsPathsSqms, nonWalkablePixelsColors, walkableFloorsSqms
+from src.utils.core import hashit, hashitHex, locate
+from src.utils.coordinate import getCoordinateFromPixel, getPixelFromCoordinate
+from .config import availableTilesFrictions, breakpointTileMovementSpeed, coordinates, dimensions, floorsImgs, floorsLevelsImgsHashes, floorsPathsSqms, nonWalkablePixelsColors, tilesFrictionsWithBreakpoints, walkableFloorsSqms
 from .extractors import getRadarImage
 from .locators import getRadarToolsPosition
 from .typings import FloorLevel, TileFriction
@@ -46,7 +47,7 @@ def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate=None) ->
                 paddingSize + areaFoundImg[1]
             (currentCoordinateX, currentCoordinateY) = getCoordinateFromPixel(
                 (currentCoordinateXPixel, currentCoordinateYPixel))
-            return [currentCoordinateX, currentCoordinateY, floorLevel]
+            return (currentCoordinateX, currentCoordinateY, floorLevel)
     imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.75)
     if imgCoordinate is None:
         return None
@@ -54,7 +55,7 @@ def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate=None) ->
     yImgCoordinate = imgCoordinate[1] + dimensions['halfHeight']
     xCoordinate, yCoordinate = getCoordinateFromPixel(
         (xImgCoordinate, yImgCoordinate))
-    return [xCoordinate, yCoordinate, floorLevel]
+    return (xCoordinate, yCoordinate, floorLevel)
 
 
 # TODO: add unit tests
@@ -89,45 +90,7 @@ def getClosestWaypointIndexFromCoordinate(coordinate: Coordinate, waypoints: Way
         waypointsIndexesOfCurrentFloor]
     lowestWaypointIndex = np.argmin(
         waypointsCoordinatesDistancesOfCurrentFloor)
-    lowestWaypointIndexOfCurrentFloor = waypointsIndexesOfCurrentFloor[lowestWaypointIndex]
-    return lowestWaypointIndexOfCurrentFloor
-
-
-availableTilesFrictions = np.array([70, 90, 95, 100, 110, 125, 140, 150, 160, 200, 250])
-
-breakpointTileMovementSpeed = {
-    1: 850,
-    2: 800,
-    3: 750,
-    4: 700,
-    5: 650,
-    6: 600,
-    7: 550,
-    8: 500,
-    9: 450,
-    10: 400,
-    11: 350,
-    12: 300,
-    13: 250,
-    14: 200,
-    15: 150,
-    16: 100,
-    17: 50,
-}
-
-tilesFrictionsWithBreakpoints = {
-    70:  np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 111, 142, 200, 342, 1070]),
-    90:  np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 147, 192, 278, 499, 1842]),
-    95:  np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127, 157, 205, 299, 543, 2096]),
-    100: np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 113, 135, 167, 219, 321, 592, 2382]),
-    110: np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 150, 187, 248, 367, 696, 3060]),
-    125: np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 146, 175, 219, 293, 444, 876, 4419]),
-    140: np.array([0, 0, 0, 0, 0, 0, 0, 111, 125, 143, 167, 201, 254, 344, 531, 1092, 6341]),
-    150: np.array([0, 0, 0, 0, 0, 0, 0, 120, 135, 155, 181, 219, 278, 380, 595, 1258, 8036]),
-    160: np.array([0, 0, 0, 0, 0, 0, 116, 129, 145, 167, 196, 238, 304, 419, 663, 1443, 10167]),
-    200: np.array([0, 0, 0, 114, 124, 135, 149, 167, 190, 219, 261, 322, 419, 597, 998, 2444, 25761]),
-    250: np.array([117, 126, 135, 146, 160, 175, 195, 220, 252, 295, 356, 446, 598, 884, 1591, 4557, 81351]),
-}
+    return waypointsIndexesOfCurrentFloor[lowestWaypointIndex]
 
 
 # TODO: add perf
@@ -135,16 +98,11 @@ def getBreakpointTileMovementSpeed(charSpeed: int, tileFriction: TileFriction) -
     tileFrictionNotFound = tileFriction not in tilesFrictionsWithBreakpoints
     if tileFrictionNotFound:
         closestTilesFrictions = np.flatnonzero(availableTilesFrictions > tileFriction)
-        hasClosestTilesFrictions = len(closestTilesFrictions) > 0
-        tileFriction = availableTilesFrictions[closestTilesFrictions[0]] if hasClosestTilesFrictions else 250
-    breakpoints = tilesFrictionsWithBreakpoints[tileFriction]
-    availableBreakpointsIndexes = np.flatnonzero(charSpeed >= breakpoints)
-    hasNoAvailableBreakpointsIndexes = len(availableBreakpointsIndexes) == 0
-    if hasNoAvailableBreakpointsIndexes:
+        tileFriction = availableTilesFrictions[closestTilesFrictions[0]] if len(closestTilesFrictions) > 0 else 250
+    availableBreakpointsIndexes = np.flatnonzero(charSpeed >= tilesFrictionsWithBreakpoints[tileFriction])
+    if len(availableBreakpointsIndexes) == 0:
         return breakpointTileMovementSpeed[1]
-    firstBreakpointIndex = availableBreakpointsIndexes[-1] + 1
-    tileMovementSpeed = breakpointTileMovementSpeed.get(firstBreakpointIndex)
-    return tileMovementSpeed
+    return breakpointTileMovementSpeed.get(availableBreakpointsIndexes[-1] + 1)
 
 
 # TODO: add unit tests
@@ -168,8 +126,7 @@ def isCloseToCoordinate(currentCoordinate: Coordinate, possibleCloseCoordinate: 
         xOfPossibleCloseCoordinate, yOfPossibleCloseCoordinate)
     euclideanDistance = distance.cdist(
         [XYOfCurrentCoordinate], [XYOfPossibleCloseCoordinate])
-    isClose = euclideanDistance <= distanceTolerance
-    return isClose
+    return euclideanDistance <= distanceTolerance
 
 
 # TODO: add unit tests
@@ -183,5 +140,4 @@ def isCoordinateWalkable(coordinate: Coordinate) -> bool:
 # TODO: add unit tests
 # TODO: add perf
 def isNonWalkablePixelColor(pixelColor: GrayPixel) -> bool:
-    isNonWalkable = np.isin(pixelColor, nonWalkablePixelsColors)
-    return isNonWalkable
+    return np.isin(pixelColor, nonWalkablePixelsColors)

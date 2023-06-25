@@ -1,8 +1,7 @@
 import numpy as np
-from typing import List, Union
 from scipy.spatial import distance
+from typing import List, Union
 from src.shared.typings import Coordinate, CoordinateList, XYCoordinate
-from .core import getPixelFromCoordinate
 
 
 # TODO: add unit tests
@@ -11,16 +10,15 @@ def getAroundPixelsCoordinates(pixelCoordinate: XYCoordinate) -> List[XYCoordina
         [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
     pixelCoordinates = np.broadcast_to(
         pixelCoordinate, aroundPixelsCoordinatesIndexes.shape)
-    aroundPixelsCoordinates = np.add(
-        aroundPixelsCoordinatesIndexes, pixelCoordinates)
-    return aroundPixelsCoordinates
+    return np.add(aroundPixelsCoordinatesIndexes, pixelCoordinates)
 
 
 # TODO: add unit tests
 def getAvailableAroundPixelsCoordinates(aroundPixelsCoordinates: List[XYCoordinate], walkableFloorSqms: np.ndarray) -> List[XYCoordinate]:
     yPixelsCoordinates = aroundPixelsCoordinates[:, 1]
     xPixelsCoordinates = aroundPixelsCoordinates[:, 0]
-    nonzero = np.nonzero(walkableFloorSqms[yPixelsCoordinates, xPixelsCoordinates])[0]
+    nonzero = np.nonzero(
+        walkableFloorSqms[yPixelsCoordinates, xPixelsCoordinates])[0]
     return np.take(
         aroundPixelsCoordinates, nonzero, axis=0)
 
@@ -39,29 +37,29 @@ def getAvailableAroundCoordinates(coordinate: Coordinate, walkableFloorSqms: np.
         (xCoordinates, yCoordinates, floors))
 
 
-# TODO: add unit tests
 def getClosestCoordinate(coordinate: Coordinate, coordinates: CoordinateList) -> Coordinate:
-    xOfCoordinate, yOfCoordinate, _ = coordinate
-    coordinateWithoutFloor = [xOfCoordinate, yOfCoordinate]
-    coordinatesWithoutFloor = coordinates[:, [0, 1]]
+    coordinateWithoutFloor = (coordinate[0], coordinate[1])
+    coordinatesWithoutFloor = [(x[0], x[1]) for x in coordinates]
     distancesOfCoordinates = distance.cdist(
         [coordinateWithoutFloor], coordinatesWithoutFloor)[0]
-    sortedDistancesOfCoordinates = np.argsort(distancesOfCoordinates)
-    closestCoordinateIndex = sortedDistancesOfCoordinates[0]
-    closestCoordinate = coordinates[closestCoordinateIndex]
-    return closestCoordinate
+    closestCoordinateIndex = np.argsort(distancesOfCoordinates)[0]
+    return coordinates[closestCoordinateIndex]
 
 
-# TODO: add unit tests
+def getCoordinateFromPixel(pixel: XYCoordinate) -> Coordinate:
+    return pixel[0] + 31744, pixel[1] + 30976
+
+
 def getDirectionBetweenCoordinates(coordinate: Coordinate, nextCoordinate: Coordinate) -> Union[str, None]:
-    (xOfCurrentCoordinate, yOfCurrentCoordinate, _) = coordinate
-    (xOfNextWaypointCoordinate, yOfNextWaypointCoordinate, _) = nextCoordinate
-    if xOfCurrentCoordinate < xOfNextWaypointCoordinate:
+    if coordinate[0] < nextCoordinate[0]:
         return 'right'
-    if xOfNextWaypointCoordinate < xOfCurrentCoordinate:
+    if nextCoordinate[0] < coordinate[0]:
         return 'left'
-    if yOfCurrentCoordinate < yOfNextWaypointCoordinate:
+    if coordinate[1] < nextCoordinate[1]:
         return 'down'
-    if yOfNextWaypointCoordinate < yOfCurrentCoordinate:
+    if nextCoordinate[1] < coordinate[1]:
         return 'up'
-    return None
+
+
+def getPixelFromCoordinate(coordinate: Coordinate) -> XYCoordinate:
+    return coordinate[0] - 31744, coordinate[1] - 30976

@@ -37,15 +37,14 @@ def setHandleLootMiddleware(context: Context) -> Context:
     currentTaskName = context['tasksOrchestrator'].getCurrentTaskName(context)
     if (currentTaskName not in ['depositGold', 'refill', 'selectChatTab']):
         lootTab = context['chat']['tabs'].get('loot')
-        hasChatTab = lootTab is not None
-        if hasChatTab and not lootTab['isSelected']:
+        if lootTab is not None and not lootTab['isSelected']:
             context['tasksOrchestrator'].setRootTask(context, SelectChatTabTask('loot'))
     if hasNewLoot(context['screenshot']):
         if context['cavebot']['previousTargetCreature'] is not None:
             context['loot']['corpsesToLoot'] = np.append(context['loot']['corpsesToLoot'], [context['cavebot']['previousTargetCreature']], axis=0)
             context['cavebot']['previousTargetCreature'] = None
-        hasSpelledExoriCategory = context['comboSpells']['lastUsedSpell'] is not None and context['comboSpells']['lastUsedSpell'] in ['exori', 'exori gran', 'exori mas']
-        if hasSpelledExoriCategory:
+        # has spelled exori category
+        if context['comboSpells']['lastUsedSpell'] is not None and context['comboSpells']['lastUsedSpell'] in ['exori', 'exori gran', 'exori mas']:
             spellPath = spellsPath.get(context['comboSpells']['lastUsedSpell'], [])
             if len(spellPath) > 0:
                 differentCreatures = getDifferentCreaturesBySlots(context['gameWindow']['previousMonsters'], context['gameWindow']['monsters'], spellPath)
@@ -59,21 +58,22 @@ def setHandleLootMiddleware(context: Context) -> Context:
 
 # TODO: add unit tests
 def setGameWindowMiddleware(context: Context) -> Context:
-    gameWindowSize = gameWindowSizes[context['resolution']]
     context['gameWindow']['coordinate'] = getCoordinate(
-        context['screenshot'], gameWindowSize)
+        context['screenshot'], gameWindowSizes[context['resolution']])
     context['gameWindow']['image'] = getImageByCoordinate(
-        context['screenshot'], context['gameWindow']['coordinate'], gameWindowSize)
+        context['screenshot'], context['gameWindow']['coordinate'], gameWindowSizes[context['resolution']])
     return context
 
 
 # TODO: add unit tests
 def setGameWindowCreaturesMiddleware(context: Context) -> Context:
-    beingAttackedCreatureCategory = getBeingAttackedCreatureCategory(context['battleList']['creatures'])
-    context['battleList']['beingAttackedCreatureCategory'] = beingAttackedCreatureCategory
+    context['battleList']['beingAttackedCreatureCategory'] = getBeingAttackedCreatureCategory(context['battleList']['creatures'])
     context['gameWindow']['creatures'] = getCreatures(
-        context['battleList']['creatures'], context['comingFromDirection'], context['gameWindow']['coordinate'], context['gameWindow']['image'], context['radar']['coordinate'], beingAttackedCreatureCategory=beingAttackedCreatureCategory, walkedPixelsInSqm=context['gameWindow']['walkedPixelsInSqm'])
-    hasNoGameWindowCreatures = len(context['gameWindow']['creatures']) == 0
-    context['gameWindow']['monsters'] = np.array([], dtype=Creature) if hasNoGameWindowCreatures else getCreaturesByType(context['gameWindow']['creatures'], 'monster')
-    context['gameWindow']['players'] = np.array([], dtype=Creature) if hasNoGameWindowCreatures else getCreaturesByType(context['gameWindow']['creatures'], 'player')
+        context['battleList']['creatures'], context['comingFromDirection'], context['gameWindow']['coordinate'], context['gameWindow']['image'], context['radar']['coordinate'], beingAttackedCreatureCategory=context['battleList']['beingAttackedCreatureCategory'], walkedPixelsInSqm=context['gameWindow']['walkedPixelsInSqm'])
+    if len(context['gameWindow']['creatures']) == 0:
+        context['gameWindow']['monsters'] = np.array([], dtype=Creature)
+        context['gameWindow']['players'] = np.array([], dtype=Creature)
+        return context
+    context['gameWindow']['monsters'] = getCreaturesByType(context['gameWindow']['creatures'], 'monster')
+    context['gameWindow']['players'] = getCreaturesByType(context['gameWindow']['creatures'], 'player')
     return context

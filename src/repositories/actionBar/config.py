@@ -8,6 +8,13 @@ imagesPath = f'{currentPath}/images'
 arrowsImagesPath = f'{imagesPath}/arrows'
 cooldownsImagesPath = f'{imagesPath}/cooldowns'
 digitsImagesPath = f'{imagesPath}/digits'
+hashes = {
+    'cooldowns': {
+        hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/attack.png')): 'attack',
+        hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/healing.png')): 'healing',
+        hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/support.png')): 'support'
+    }
+}
 images = {
     'arrows': {
         'left': loadFromRGBToGray(f'{arrowsImagesPath }/left.png'),

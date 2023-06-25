@@ -1,4 +1,5 @@
 import cv2
+from numba import njit
 import numpy as np
 from PIL import Image
 from typing import Union
@@ -14,13 +15,15 @@ def cacheChain(imageList):
         lastY = None
         lastW = None
         lastH = None
-        lastImgHash = None
+        lastImageHash = None
+
         def inner(screenshot: GrayImage) -> Union[BBox, None]:
-            nonlocal lastX, lastY, lastW, lastH, lastImgHash
+            nonlocal lastX, lastY, lastW, lastH, lastImageHash
             if lastX != None and lastY != None and lastW != None and lastH != None:
-                copiedImg = screenshot[lastY:lastY + lastH, lastX:lastX + lastW]
-                copiedImgHash = hashit(copiedImg)
-                if copiedImgHash == lastImgHash:
+                copiedImage = screenshot[lastY:lastY +
+                                         lastH, lastX:lastX + lastW]
+                copiedImageHash = hashit(copiedImage)
+                if copiedImageHash == lastImageHash:
                     return (lastX, lastY, lastW, lastH)
             for image in imageList:
                 imagePosition = locate(screenshot, image)
@@ -30,8 +33,9 @@ def cacheChain(imageList):
                     lastY = y
                     lastW = w
                     lastH = h
-                    lastImg = screenshot[lastY:lastY + lastH, lastX:lastX + lastW]
-                    lastImgHash = hashit(lastImg)
+                    lastImage = screenshot[lastY:lastY +
+                                           lastH, lastX:lastX + lastW]
+                    lastImageHash = hashit(lastImage)
                     return (x, y, w, h)
             return None
         return inner
@@ -39,8 +43,13 @@ def cacheChain(imageList):
 
 
 # TODO: add unit tests
+@njit(cache=True, fastmath=True)
 def convertGraysToBlack(arr: np.ndarray) -> np.ndarray:
-    return np.array(np.where(np.logical_and(arr >= 50, arr <= 100), 0, arr), dtype=np.uint8)
+    for i in range(len(arr[0])):
+        for j in range(len(arr)):
+            if arr[i, j] >= 50 and arr[i, j] <= 100:
+                arr[i, j] = 0
+    return arr
 
 
 # TODO: add unit tests
@@ -60,8 +69,8 @@ def save(arr: GrayImage, name: str):
 
 
 # TODO: add unit tests
-def crop(img: GrayImage, x: int, y: int, width: int, height: int) -> GrayImage:
-    return img[y:y + height, x:x + width]
+def crop(image: GrayImage, x: int, y: int, width: int, height: int) -> GrayImage:
+    return image[y:y + height, x:x + width]
 
 
 # TODO: add unit tests
